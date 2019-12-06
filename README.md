@@ -1,1 +1,1 @@
-# qt_cplusplus_mazegenration
+# qt_cplusplus_mazegeneration
