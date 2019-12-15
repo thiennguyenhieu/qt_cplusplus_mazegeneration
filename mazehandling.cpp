@@ -7,7 +7,7 @@
 
 #define MAZE_ROWS 50
 #define MAZE_COLS 50
-#define CELL_SIZE 20
+#define CELL_SIZE 16
 #define CELL_LINE 4
 
 MazeHandling::MazeHandling(QWidget* parent) : QWidget(parent)
@@ -107,12 +107,7 @@ void MazeHandling::generateMazeData()
 
     // Set start and end points
     m_pStartCell = m_arrayMazeData[0][0];
-    if (m_pStartCell)
-        m_pStartCell->removeWall(Cell::WALL_WEST);
-
     m_pEndCell = m_arrayMazeData[MAZE_ROWS - 1][MAZE_COLS - 1];
-    if (m_pEndCell)
-        m_pEndCell->removeWall(Cell::WALL_EAST);
 
     m_bMazeDataAvailable = true;
     this->update();

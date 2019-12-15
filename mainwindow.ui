@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1064</width>
-    <height>1108</height>
+    <width>864</width>
+    <height>908</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>1064</width>
-    <height>1108</height>
+    <width>864</width>
+    <height>908</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1064</width>
-    <height>1108</height>
+    <width>864</width>
+    <height>908</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -77,20 +77,20 @@
      <rect>
       <x>30</x>
       <y>60</y>
-      <width>1004</width>
-      <height>1004</height>
+      <width>804</width>
+      <height>804</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
-      <width>1004</width>
-      <height>1004</height>
+      <width>804</width>
+      <height>804</height>
      </size>
     </property>
     <property name="maximumSize">
      <size>
-      <width>1004</width>
-      <height>1004</height>
+      <width>804</width>
+      <height>804</height>
      </size>
     </property>
    </widget>
@@ -100,7 +100,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1064</width>
+     <width>864</width>
      <height>21</height>
     </rect>
    </property>
