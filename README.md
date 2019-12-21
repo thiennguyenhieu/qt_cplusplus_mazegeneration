@@ -4,3 +4,5 @@ The generated maze can be solved by using depth-first search or breadth-first se
 
 Layout:
 ![alt text](https://github.com/thiennguyenhieu/qt_cplusplus_mazegeneration_exefiles/blob/master/mazegenerator_gui.png)
+
+Executable files: https://github.com/thiennguyenhieu/qt_cplusplus_mazegeneration_exefiles
