@@ -6,6 +6,7 @@ Cell::Cell(int rowIdx, int colIdx)
     m_ptColIdx = colIdx;
     m_bVisited = false;
     m_cWall = WALL_ALL;
+    m_pParentCell = nullptr;
 }
 
 Cell::~Cell()
@@ -75,4 +76,14 @@ void Cell::setColIdx(int colIndex)
 int Cell::getColIdx()
 {
     return m_ptColIdx;
+}
+
+void Cell::setParentCell(Cell *cell)
+{
+    m_pParentCell = cell;
+}
+
+Cell* Cell::getParentCell()
+{
+    return m_pParentCell;
 }

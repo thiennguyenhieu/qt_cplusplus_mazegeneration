@@ -4,6 +4,9 @@
 #include <time.h>
 #include <QPainter>
 #include <stack>
+#include <queue>
+#include <chrono>
+#include "mainwindow.h"
 
 #define MAZE_ROWS 50
 #define MAZE_COLS 50
@@ -16,7 +19,6 @@ MazeHandling::MazeHandling(QWidget* parent) : QWidget(parent)
     m_bSolveDataAvailable = false;
     m_pStartCell = nullptr;
     m_pEndCell = nullptr;
-    m_eGenMazeType = GENMAZE_DFS;
     m_eSolveMazeType = SOLVEMAZE_DFS;
 }
 
@@ -64,11 +66,6 @@ void MazeHandling::resetVisitedFlag()
     }
 }
 
-void MazeHandling::setGenMazeType(eGENMAZE_TYPE eGenMazeType)
-{
-    m_eGenMazeType = eGenMazeType;
-}
-
 void MazeHandling::setSolveMazeType(eSOLVEMAZE_TYPE eSolveMazeType)
 {
     m_eSolveMazeType = eSolveMazeType;
@@ -82,6 +79,7 @@ void MazeHandling::generateMazeData()
     // Generate new maze, also clear solved data of previous maze
     m_bSolveDataAvailable = false;
     m_pathSolvedData.clear();
+    m_pathTraversedData.clear();
 
     for (int nRowIndex = 0; nRowIndex < MAZE_ROWS; ++nRowIndex)
     {
@@ -94,16 +92,7 @@ void MazeHandling::generateMazeData()
         m_arrayMazeData.push_back(vectorCol);
     }
 
-    srand(static_cast<unsigned int>(time(nullptr)));
-
-    switch (m_eGenMazeType)
-    {
-    case GENMAZE_DFS:
-        carveDFS();
-        break;
-    default:
-        break;
-    }
+    carveDFS();
 
     // Set start and end points
     m_pStartCell = m_arrayMazeData[0][0];
@@ -127,6 +116,7 @@ void MazeHandling::carveDFS()
     */
 
     // Random a initial cell
+    srand(static_cast<unsigned int>(time(nullptr)));
     size_t ranRowIndex = rand() % MAZE_ROWS;
     size_t ranColIndex = rand() % MAZE_COLS;
 
@@ -241,17 +231,27 @@ void MazeHandling::solveMazeData()
     resetVisitedFlag();
     m_bSolveDataAvailable = false;
     m_pathSolvedData.clear();
+    m_pathTraversedData.clear();
 
     srand(static_cast<unsigned int>(time(nullptr)));
+
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     switch (m_eSolveMazeType)
     {
     case SOLVEMAZE_DFS:
         solveDFS();
         break;
-    default:
+    case SOLVEMAZE_BFS:
+        solveBFS();
         break;
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    int nExecuteTime = static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count());
+
+    QObject* pParent = this->parent();
+    static_cast<MainWindow*>(pParent)->updateExecuteTime(nExecuteTime);
 
     m_bSolveDataAvailable = true;
     this->update();
@@ -259,37 +259,62 @@ void MazeHandling::solveMazeData()
 
 void MazeHandling::solveDFS()
 {
+    /*
+    Depth-First-Search( Maze m )
+        Mark m.StartNode "Visited"
+        PushStack( m.StartNode )
+
+        While Stack.NotEmpty
+            c <- TopStack
+            If c is the goal
+                Exit
+            Else
+                If there are unvisited available neighbors
+                    Chose a random neighbor n of c
+                        Mark n "Visited"
+                        PushStack( n )
+                Else
+                    PopStack(c)
+    End procedure
+    */
+
     if ((m_pStartCell == nullptr) || (m_pEndCell == nullptr))
         return;
 
     std::stack<Cell*> stackVisitedCell;
 
     m_pStartCell->setVisited(true);
+    m_pStartCell->setParentCell(nullptr);
     stackVisitedCell.push(m_pStartCell);
 
-    while( !stackVisitedCell.empty() )
+    while ( !stackVisitedCell.empty() )
     {
         Cell* curCell = stackVisitedCell.top();
-        NEIGHBOR_INFO infoNeighbor = getRandomSolveNeighborDir(curCell);
-        // If there is no unvisited neighbor, remove the last visited cell from the stack
-        // Then, back track to process the top cell of the stack
-        char nextDir = infoNeighbor.first;
-        if (nextDir == -1)
+
+        if ((curCell->getRowIdx() == m_pEndCell->getRowIdx()) && (curCell->getColIdx() == m_pEndCell->getColIdx()))
         {
-            stackVisitedCell.pop();
-            continue;
+            break;  // End point is found, exit the loop
         }
-
-        Cell* nextCell = infoNeighbor.second;
-        if (nextCell != nullptr)
+        else
         {
-            nextCell->setVisited(true);
-            stackVisitedCell.push(nextCell);
+            NEIGHBOR_INFO infoNeighbor = getRandomSolveNeighborDir(curCell);
+            char nextDir = infoNeighbor.first;
 
-            // End point is found, exit the loop
-            if ((nextCell->getRowIdx() == m_pEndCell->getRowIdx()) &&
-                (nextCell->getColIdx() == m_pEndCell->getColIdx()))
-                break;
+            if (nextDir != -1)
+            {
+                Cell* nextCell = infoNeighbor.second;
+                if (nextCell != nullptr)
+                {
+                    nextCell->setVisited(true);
+                    nextCell->setParentCell(curCell);
+                    stackVisitedCell.push(nextCell);
+                }
+            }
+            else
+            {
+                m_pathTraversedData.push_back(curCell);
+                stackVisitedCell.pop();
+            }
         }
     }
 
@@ -300,6 +325,99 @@ void MazeHandling::solveDFS()
             Cell* curCell = stackVisitedCell.top();
             m_pathSolvedData.push_back(curCell);
             stackVisitedCell.pop( );
+        }
+    }
+}
+
+void MazeHandling::solveBFS()
+{
+    /*
+    Breadth-First-Search( Maze m )
+        Mark m.StartNode "Visited"
+        EnQueue( m.StartNode )
+
+        While Queue.NotEmpty
+            c <- DeQueue
+            If c is the goal
+                Exit
+            Else
+                Foreach unvisted neighbors n of c
+                    Mark n "Visited"
+                    EnQueue( n )
+                Mark c "Examined"
+    End procedure
+    */
+
+    if ((m_pStartCell == nullptr) || (m_pEndCell == nullptr))
+        return;
+
+    std::queue<Cell*> queueVisitedCell;
+    std::vector<Cell*> vecExaminedCell;
+
+    m_pStartCell->setVisited(true);
+    m_pStartCell->setParentCell(nullptr);
+    queueVisitedCell.push(m_pStartCell);
+
+    while ( !queueVisitedCell.empty() )
+    {
+        // first: cell, second: it's parent
+        Cell* curCell = queueVisitedCell.front();
+        queueVisitedCell.pop();
+
+        if ((curCell->getRowIdx() == m_pEndCell->getRowIdx()) && (curCell->getColIdx() == m_pEndCell->getColIdx()))
+        {
+            vecExaminedCell.push_back(curCell);
+            break;  // End point is found, exit the loop
+        }
+        else
+        {
+            std::vector<Cell *> listNeighborCell;
+            getAvailableSolveNeightbors(curCell, listNeighborCell);
+
+            for (size_t nCellIdx = 0; nCellIdx < listNeighborCell.size(); ++nCellIdx)
+            {
+                Cell* neighborCell = listNeighborCell.at(nCellIdx);
+
+                neighborCell->setVisited(true);
+                neighborCell->setParentCell(curCell);
+
+                queueVisitedCell.push(neighborCell);
+            }
+
+            vecExaminedCell.push_back(curCell);
+        }
+    }
+
+    // Because examined list is containing unexpected cells,
+    // now we find the path from end cell by checking availability of parent cell
+    size_t nExaminedCellSize = vecExaminedCell.size();
+    if (nExaminedCellSize > 3) // at least there are some cells except start and end cells
+    {
+        Cell* curCell = vecExaminedCell[nExaminedCellSize - 1];
+        m_pathSolvedData.push_back(curCell);
+
+        size_t nPreviousIndex = nExaminedCellSize - 2;
+        Cell* previousCell = nullptr;
+
+        while ( curCell->getParentCell() != nullptr )
+        {
+            previousCell = vecExaminedCell[nPreviousIndex];
+
+            if (previousCell == curCell->getParentCell())
+            {
+                m_pathSolvedData.push_back(previousCell);
+
+                if (previousCell->getParentCell() == nullptr)
+                    break;
+
+                curCell = previousCell;
+            }
+            else
+            {
+                m_pathTraversedData.push_back(previousCell);
+            }
+
+            nPreviousIndex--;
         }
     }
 }
@@ -355,12 +473,90 @@ NEIGHBOR_INFO MazeHandling::getRandomSolveNeighborDir(Cell* cell)
     return retInfo;
 }
 
+void MazeHandling::getAvailableSolveNeightbors(Cell *cell, std::vector<Cell *> &listCell)
+{
+    if (cell == nullptr)
+        return;
+
+    int dirNorth = cell->getRowIdx() - 1;
+    int dirEast  = cell->getColIdx() + 1;
+    int dirSouth = cell->getRowIdx() + 1;
+    int dirWest  = cell->getColIdx() - 1;
+
+    if ((dirNorth >= 0) && (!cell->isNorthWall()))
+    {
+        Cell* cellNorth = m_arrayMazeData[static_cast<size_t>(dirNorth)][static_cast<size_t>(cell->getColIdx())];
+        if ( (cellNorth) && (cellNorth->isVisited() == false) )
+            listCell.push_back(cellNorth);
+    }
+
+    if ((dirEast < MAZE_COLS) && (!cell->isEastWall()))
+    {
+        Cell* cellEast = m_arrayMazeData[static_cast<size_t>(cell->getRowIdx())][static_cast<size_t>(dirEast)];
+        if ( (cellEast) && (cellEast->isVisited() == false) )
+            listCell.push_back(cellEast);
+    }
+
+    if ((dirSouth < MAZE_ROWS) &&(!cell->isSouthWall()))
+    {
+        Cell* cellSouth = m_arrayMazeData[static_cast<size_t>(dirSouth)][static_cast<size_t>(cell->getColIdx())];
+        if ( (cellSouth) && (cellSouth->isVisited() == false) )
+            listCell.push_back(cellSouth);
+    }
+
+    if ((dirWest >= 0) && (!cell->isWestWall()))
+    {
+        Cell* cellWest = m_arrayMazeData[static_cast<size_t>(cell->getRowIdx())][static_cast<size_t>(dirWest)];
+        if ( (cellWest) && (cellWest->isVisited() == false) )
+            listCell.push_back(cellWest);
+    }
+}
+
 void MazeHandling::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     QPen myPen(Qt::black, CELL_LINE, Qt::SolidLine);
     painter.setPen(myPen);
+
+    size_t nSolveDataSize = m_pathSolvedData.size();
+    if ((m_bSolveDataAvailable) && (nSolveDataSize > 0))
+    {
+        // Draw path from 2nd ~ (n - 1)th cell because 1st cell is starting point and (n)th is end point
+        for (size_t nSolveIdx = 1; nSolveIdx < nSolveDataSize - 1; ++nSolveIdx)
+        {
+            Cell* cell = m_pathSolvedData[nSolveIdx];
+
+            if (cell == nullptr)
+                continue;
+
+            int ptX = static_cast<int>(cell->getColIdx() * CELL_SIZE) + CELL_LINE/2;
+            int ptY = static_cast<int>(cell->getRowIdx() * CELL_SIZE) + CELL_LINE/2;
+
+            QPainterPath path;
+            path.addRect(QRectF(ptX, ptY, CELL_SIZE, CELL_SIZE));
+            painter.fillPath(path, Qt::green);
+        }
+    }
+
+    size_t nTraversedDataSize = m_pathTraversedData.size();
+    if ((m_bSolveDataAvailable) && (nTraversedDataSize > 0))
+    {
+        for (size_t nTraverseIdx = 0; nTraverseIdx < nTraversedDataSize; ++nTraverseIdx)
+        {
+            Cell* cell = m_pathTraversedData[nTraverseIdx];
+
+            if (cell == nullptr)
+                continue;
+
+            int ptX = static_cast<int>(cell->getColIdx() * CELL_SIZE) + CELL_LINE/2;
+            int ptY = static_cast<int>(cell->getRowIdx() * CELL_SIZE) + CELL_LINE/2;
+
+            QPainterPath path;
+            path.addRect(QRectF(ptX, ptY, CELL_SIZE, CELL_SIZE));
+            painter.fillPath(path, Qt::gray);
+        }
+    }
 
     if (m_bMazeDataAvailable)
     {
@@ -404,26 +600,6 @@ void MazeHandling::paintEvent(QPaintEvent*)
                 if (cell->isWestWall())
                     painter.drawLine(ptX, ptY, ptX, ptY + CELL_SIZE);
             }
-        }
-    }
-
-    if (m_bSolveDataAvailable)
-    {
-        size_t nSolveDataSize = m_pathSolvedData.size();
-        // Draw path from 2nd ~ (n - 1)th cell because 1st cell is starting point and (n)th is end point
-        for (size_t nSolveIdx = 1; nSolveIdx < nSolveDataSize - 1; ++nSolveIdx)
-        {
-            Cell* cell = m_pathSolvedData[nSolveIdx];
-
-            if (cell == nullptr)
-                continue;
-
-            int ptX = static_cast<int>(cell->getColIdx() * CELL_SIZE) + CELL_LINE/2;
-            int ptY = static_cast<int>(cell->getRowIdx() * CELL_SIZE) + CELL_LINE/2;
-
-            QPainterPath path;
-            path.addRoundedRect(QRectF(ptX + CELL_LINE/2, ptY + CELL_LINE/2, CELL_SIZE - CELL_LINE, CELL_SIZE - CELL_LINE), CELL_SIZE/2, CELL_SIZE/2);
-            painter.fillPath(path, Qt::green);
         }
     }
 }

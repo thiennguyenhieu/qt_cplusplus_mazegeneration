@@ -17,12 +17,12 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+    void updateExecuteTime(int val);
+
 private slots:
     void on_btnGenMaze_clicked();
 
     void on_btnSolve_clicked();
-
-    void on_cmbGenType_currentIndexChanged(int index);
 
     void on_cmbSolveType_currentIndexChanged(int index);
 

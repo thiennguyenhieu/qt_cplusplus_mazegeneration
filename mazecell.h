@@ -34,11 +34,15 @@ public:
     void setColIdx(int colIndex);
     int getColIdx();
 
+    void setParentCell(Cell* cell);
+    Cell* getParentCell();
+
 private:
     bool m_bVisited;
     char m_cWall;
     int m_ptRowIdx;
     int m_ptColIdx;
+    Cell* m_pParentCell;
 };
 
 #endif // MAZECELL_H

@@ -9,8 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     ui->widgetMaze->generateMazeData();
-    ui->cmbGenType->insertItem(0, "DFS", MazeHandling::GENMAZE_DFS);
+    ui->widgetMaze->setParent(this);
     ui->cmbSolveType->insertItem(0, "DFS", MazeHandling::SOLVEMAZE_DFS);
+    ui->cmbSolveType->insertItem(1, "BFS", MazeHandling::SOLVEMAZE_BFS);
 }
 
 MainWindow::~MainWindow()
@@ -18,20 +19,21 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::updateExecuteTime(int val)
+{
+    QString strExecuteTime = QString::number(val) + " microsecs";
+    ui->lblTimeVal->setText(strExecuteTime);
+}
+
 void MainWindow::on_btnGenMaze_clicked()
 {
     ui->widgetMaze->generateMazeData();
+    ui->lblTimeVal->setText("_ _ _");
 }
 
 void MainWindow::on_btnSolve_clicked()
 {
     ui->widgetMaze->solveMazeData();
-}
-
-void MainWindow::on_cmbGenType_currentIndexChanged(int index)
-{
-    (void)index;
-    ui->widgetMaze->setGenMazeType(static_cast<MazeHandling::eGENMAZE_TYPE>(ui->cmbGenType->currentData().toInt()));
 }
 
 void MainWindow::on_cmbSolveType_currentIndexChanged(int index)

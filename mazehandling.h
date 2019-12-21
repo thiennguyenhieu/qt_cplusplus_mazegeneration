@@ -12,14 +12,6 @@ typedef std::vector<std::vector<Cell*>> MAZEDATA;
 class MazeHandling : public QWidget
 {
 public:
-    enum eGENMAZE_TYPE
-    {
-        GENMAZE_DFS,
-        GENMAZE_KRUSKAL,
-        GENMAZE_PRIM,
-        GENMAZE_WILSON
-    };
-
     enum eSOLVEMAZE_TYPE
     {
         SOLVEMAZE_DFS,
@@ -29,8 +21,8 @@ public:
     explicit MazeHandling(QWidget* parent = nullptr);
     ~MazeHandling() override;
 
-    void setGenMazeType(eGENMAZE_TYPE eGenMazeType);
     void setSolveMazeType(eSOLVEMAZE_TYPE eSolveMazeType);
+
     void generateMazeData();
     void solveMazeData();
 
@@ -45,19 +37,22 @@ private:
     NEIGHBOR_INFO getRandomGenNeighborDir(Cell* cell);
 
     void solveDFS();
+    void solveBFS();
+
     NEIGHBOR_INFO getRandomSolveNeighborDir(Cell* cell);
+    void getAvailableSolveNeightbors(Cell* cell, std::vector<Cell*>& listCell);
 
 private:
     MAZEDATA m_arrayMazeData;
     bool m_bMazeDataAvailable;
 
     std::vector<Cell*> m_pathSolvedData;
+    std::vector<Cell*> m_pathTraversedData;
     bool m_bSolveDataAvailable;
 
     Cell* m_pStartCell;
     Cell* m_pEndCell;
 
-    eGENMAZE_TYPE m_eGenMazeType;
     eSOLVEMAZE_TYPE m_eSolveMazeType;
 };
 
