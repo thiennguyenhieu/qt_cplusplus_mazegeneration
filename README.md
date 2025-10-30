@@ -1,8 +1,29 @@
-# qt_cplusplus_mazegeneration
-Tool to automatically generate a perfect maze by using the depth-first search algorithm.
-The generated maze can be solved by using depth-first search or breadth-first search algorithm.
+# 🌀 MazeMVVM — Maze Generator and Solver (Qt + QML + MVVM)
 
-Layout:
-![alt text](https://github.com/thiennguyenhieu/qt_cplusplus_mazegeneration_exefiles/blob/master/mazegenerator_gui.png)
+![Maze Example](./Example.png)
 
-Executable files: https://github.com/thiennguyenhieu/qt_cplusplus_mazegeneration_exefiles
+A modern **Maze Generator and Solver** built with **Qt 5.15** and **Qt Quick Controls 2**, using an **MVVM (Model–View–ViewModel)** architecture.  
+The application generates a *perfect maze* using a **Depth-First Search (DFS)** backtracker algorithm and solves it using **DFS** or **Breadth-First Search (BFS)**.
+
+---
+
+## 🚀 Features
+
+- 🧱 **Maze Generation** using recursive backtracking (DFS)
+- 🧩 **Maze Solving** using:
+  - Depth-First Search (DFS)
+  - Breadth-First Search (BFS)
+- 🧠 **MVVM Architecture**
+  - `MazeModel` (logic)
+  - `MazeViewModel` (data binding)
+  - `MazeView.qml` (UI visualization)
+- 🎨 **Qt Quick Canvas Rendering**
+  - Draws maze walls, visited path (yellow), solved path (blue)
+  - Start (green) and End (red) points
+---
+
+### Requirements
+- **Qt 5.15** or later
+- **CMake 3.16+**
+- **C++17** compiler
+
