@@ -8,7 +8,6 @@ The application generates a *perfect maze* using a **Depth-First Search (DFS)** 
 ---
 
 ## 🚀 Features
-
 - 🧱 **Maze Generation** using recursive backtracking (DFS)
 - 🧩 **Maze Solving** using:
   - Depth-First Search (DFS)
