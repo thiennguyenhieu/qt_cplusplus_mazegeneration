@@ -1,7 +1,7 @@
 # 🌀 MazeMVVM — Maze Generator and Solver (Qt + QML + MVVM)
 
 A modern **Maze Generator and Solver** built with **Qt 5.15** and **Qt Quick Controls 2**, using an **MVVM (Model–View–ViewModel)** architecture.  
-The application generates a *perfect maze* using a **Depth-First Search (DFS)** backtracker algorithm and solves it using **DFS** or **Breadth-First Search (BFS)**.
+The application generates a *perfect maze* using a **Depth-First Search (DFS)** backtracker algorithm and solves it using **DFS** or **Breadth-First Search (BFS)** or **A Star**.
 
 ![image](./Example.png)
 
@@ -12,6 +12,7 @@ The application generates a *perfect maze* using a **Depth-First Search (DFS)** 
 - 🧩 **Maze Solving** using:
   - Depth-First Search (DFS)
   - Breadth-First Search (BFS)
+  - A Star
 - 🧠 **MVVM Architecture**
   - `MazeModel` (logic)
   - `MazeViewModel` (data binding)
