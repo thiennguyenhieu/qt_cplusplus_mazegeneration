@@ -35,7 +35,7 @@ ApplicationWindow {
 
         ComboBox {
             id: combo
-            model: ["DFS", "BFS"]
+            model: ["DFS", "BFS", "A*"]
             implicitWidth: 100
             implicitHeight: 34
             background: Rectangle {

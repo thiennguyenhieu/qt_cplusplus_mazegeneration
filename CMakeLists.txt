@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 5.15.9 REQUIRED COMPONENTS Core Quick Qml QuickControls2)
+find_package(Qt5 REQUIRED COMPONENTS Core Quick Qml QuickControls2)
 
 add_executable(MazeMVVM
     main.cpp

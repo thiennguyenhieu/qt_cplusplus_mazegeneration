@@ -43,3 +43,10 @@ private:
     int m_col;
     Cell *m_parent;
 };
+
+struct Node { // Use for A*
+    Cell* cell;
+    int gCost;  // distance from start
+    int hCost;  // heuristic estimate to goal
+    int fCost() const { return gCost + hCost; }
+};

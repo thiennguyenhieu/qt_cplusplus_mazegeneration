@@ -39,9 +39,12 @@ private:
     void carveDFS();
     void solveDFS();
     void solveBFS();
+    void solveAStar();
 
+    int heuristic(Cell* a, Cell* b);
     NeighborInfo getRandomUnvisitedNeighbor(Cell *cell, bool forSolving);
     void getUnvisitedNeighbors(Cell *cell, std::vector<Cell*> &neighbors);
+    void buildSolverData();
 
     void emitMazeData();
 

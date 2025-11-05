@@ -3,6 +3,7 @@
 #include <ctime>
 #include <stack>
 #include <queue>
+#include <unordered_set>
 
 MazeModel::MazeModel(QObject *parent)
     : QObject(parent),
@@ -46,12 +47,20 @@ void MazeModel::solveMaze(SolveType type)
 
     resetSolverData();
 
-    if (type == SOLVE_DFS)
+    switch(type)
+    {
+    case SOLVE_DFS:
         solveDFS();
-    else
+        break;
+    case SOLVE_BFS:
         solveBFS();
+        break;
+    default:
+        solveAStar();
+        break;
+    }
 
-    emit solverUpdated(m_pathSolved, m_pathVisited);
+    buildSolverData();
 }
 
 void MazeModel::releaseMazeData()
@@ -224,11 +233,6 @@ void MazeModel::solveDFS()
             stack.pop();
         }
     }
-
-    while (!stack.empty()) {
-        m_pathSolved.push_back(qMakePair(stack.top()->row(), stack.top()->col()));
-        stack.pop();
-    }
 }
 
 void MazeModel::solveBFS()
@@ -291,14 +295,103 @@ void MazeModel::solveBFS()
             }
         }
     }
+}
 
-    // Backtrack from end to start
-    Cell *cur = m_endCell;
-    while (cur)
+void MazeModel::solveAStar()
+{
+    /*
+    Maze Solving using Simplified A* Search (A-Star)
+
+    1. Initialize:
+       - Define the heuristic function (Manhattan distance)
+       - Create a priority queue (min-heap) ordered by fCost = gCost + hCost
+       - Set m_startCell:
+           - gCost = 0
+           - hCost = heuristic(m_startCell, m_endCell)
+           - Push it into the priority queue
+           - Mark it as visited and record it for visualization
+
+    2. While the priority queue is not empty:
+        a. Pop the cell with the lowest fCost and make it the current cell
+        b. If the current cell == m_endCell:
+               Break   // Goal reached
+        c. Get all accessible, unvisited neighbors of the current cell
+        d. For each neighbor n:
+               i.   Compute tentativeG = gScore[current] + 1
+               ii.  Compute h = heuristic(n, m_endCell)
+               iii. Push n into the priority queue with fCost = tentativeG + h
+               iv.  Set n->Parent = current cell
+               v.   Mark n as visited and record it for visualization
+               vi.  Store gScore[n] = tentativeG
+
+    3. After the loop:
+        a. If m_endCell was reached:
+               - Backtrack from m_endCell to m_startCell using Parent pointers
+               - Store this sequence in m_pathSolved (shortest path)
+
+    Notes:
+    - This simplified version treats every movement between adjacent cells as cost = 1
+    - The algorithm always expands the node with the lowest fCost = g + h
+    - In a perfect maze (single path between start and end), this yields the same result as BFS
+    */
+
+    if (!m_startCell || !m_endCell)
+        return;
+
+    // A* priority queue based on fCost
+    auto compare = [](const Node &a, const Node &b) {
+        return a.fCost() > b.fCost(); // lower fCost has higher priority
+    };
+
+    // Create a priority queue of Nodes ordered by smallest fCost.
+    std::priority_queue<Node, std::vector<Node>, decltype(compare)> openSet(compare);
+
+    std::unordered_map<Cell*, int> gScore;
+    std::unordered_set<Cell*> closedSet;
+
+    // Initialize start node
+    Node startNode{m_startCell, 0, heuristic(m_startCell, m_endCell)};
+    openSet.push(startNode);
+    gScore[m_startCell] = 0;
+
+    m_startCell->setVisited(true);
+    m_pathVisited.push_back(qMakePair(m_startCell->row(), m_startCell->col()));
+
+    while (!openSet.empty())
     {
-        m_pathSolved.push_back(qMakePair(cur->row(), cur->col()));
-        cur = cur->parent();
+        Node curNode = openSet.top();
+        openSet.pop();
+
+        Cell* cur = curNode.cell;
+
+        if (cur == m_endCell) {
+            break;
+        }
+
+        std::vector<Cell*> neighbors;
+        getUnvisitedNeighbors(cur, neighbors);
+
+        // Every move between two connected cells has a uniform cost = 1
+        int tentativeG = gScore[cur] + 1;
+
+        for (Cell* neighbor : neighbors)
+        {
+            gScore[neighbor] = tentativeG;
+            int h = heuristic(neighbor, m_endCell);
+            Node nextNode{neighbor, tentativeG, h};
+            openSet.push(nextNode);
+
+            neighbor->setVisited(true);
+            neighbor->setParent(cur);
+            m_pathVisited.push_back(qMakePair(neighbor->row(), neighbor->col()));
+        }
     }
+}
+
+int MazeModel::heuristic(Cell* a, Cell* b)
+{
+    // Manhattan distance (works for grid-based movement)
+    return std::abs(a->row() - b->row()) + std::abs(a->col() - b->col());
 }
 
 NeighborInfo MazeModel::getRandomUnvisitedNeighbor(Cell *cell, bool forSolving)
@@ -382,6 +475,19 @@ void MazeModel::getUnvisitedNeighbors(Cell *cell, std::vector<Cell*> &neighbors)
         if (!west->isVisited())
             neighbors.push_back(west);
     }
+}
+
+void MazeModel::buildSolverData()
+{
+    // Backtrack from end to start
+    Cell* cur = m_endCell;
+    while (cur)
+    {
+        m_pathSolved.push_back(qMakePair(cur->row(), cur->col()));
+        cur = cur->parent();
+    }
+
+    emit solverUpdated(m_pathSolved, m_pathVisited);
 }
 
 void MazeModel::emitMazeData()
